@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>飛吧！排球少年有向數熱血特訓 (Haikyuu!! Math)</title>
+  <title>飛べ！排球少年 3D 有向數扣殺特訓 (Haikyuu 3D Math)</title>
   
-  <!-- Tailwind CSS & Google Fonts -->
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Mochiy+Pop+One&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
   
   <style>
     :root {
-      --karasuno-orange: #ff7700;
-      --karasuno-dark: #101114;
+      --karasuno-orange: #ff7500;
+      --karasuno-black: #0c0d10;
       --karasuno-gold: #ffbe0b;
-      --aojousai-teal: #2ec4b6;
+      --court-wood: #cf8a40;
     }
     * {
       box-sizing: border-box;
@@ -27,7 +31,7 @@
       height: 100%;
       height: 100dvh;
       overflow: hidden;
-      background-color: var(--karasuno-dark);
+      background-color: var(--karasuno-black);
       font-family: 'Noto Sans TC', sans-serif;
       color: #f8fafc;
     }
@@ -37,302 +41,304 @@
     .font-manga {
       font-family: 'Mochiy Pop One', 'Noto Sans TC', sans-serif;
     }
-    /* 速度感斜紋背景 */
-    .bg-speed-lines {
-      background: radial-gradient(circle at 50% 20%, rgba(255, 119, 0, 0.15) 0%, transparent 70%),
-                  repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.015) 0px, rgba(255, 255, 255, 0.015) 2px, transparent 2px, transparent 6px);
+    .speed-lines {
+      background: radial-gradient(circle at 50% 30%, rgba(255, 117, 0, 0.18) 0%, transparent 75%),
+                  repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.02) 0px, rgba(255, 255, 255, 0.02) 2px, transparent 2px, transparent 8px);
     }
-    /* 漫畫重擊震動特效 */
+    /* 漫畫重擊屏幕震動 */
     @keyframes smashShake {
       0%, 100% { transform: translate(0, 0) scale(1); }
-      15% { transform: translate(-8px, 6px) scale(1.02); }
-      30% { transform: translate(7px, -6px) scale(0.99); }
-      45% { transform: translate(-5px, 4px) scale(1.01); }
-      65% { transform: translate(4px, -3px) scale(1); }
-      85% { transform: translate(-2px, 2px) scale(1); }
+      15% { transform: translate(-10px, 8px) scale(1.02); }
+      30% { transform: translate(9px, -8px) scale(0.99); }
+      45% { transform: translate(-6px, 5px) scale(1.01); }
+      65% { transform: translate(5px, -4px) scale(1); }
+      85% { transform: translate(-3px, 2px) scale(1); }
     }
     .shake-active {
-      animation: smashShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+      animation: smashShake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
     }
-    /* 漫畫狀聲詞爆發動畫 */
+    /* 漫畫狀聲詞字樣動畫 */
     @keyframes mangaPop {
-      0% { transform: scale(0.2) rotate(-15deg); opacity: 0; }
-      50% { transform: scale(1.3) rotate(6deg); opacity: 1; }
-      70% { transform: scale(0.95) rotate(-3deg); opacity: 1; }
+      0% { transform: scale(0.2) rotate(-16deg); opacity: 0; }
+      50% { transform: scale(1.35) rotate(7deg); opacity: 1; }
+      75% { transform: scale(0.92) rotate(-4deg); opacity: 1; }
       100% { transform: scale(1) rotate(0deg); opacity: 1; }
     }
     .manga-pop {
-      animation: mangaPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      animation: mangaPop 0.38s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
-    /* 排球旋轉跳躍 */
-    @keyframes spinBall {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .spin-ball {
-      animation: spinBall 1.2s linear infinite;
+    /* 網格遮罩效果 */
+    .net-pattern {
+      background-image: linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 8px 8px;
     }
   </style>
 </head>
-<body class="flex flex-col justify-between items-center w-full max-w-md mx-auto h-[100dvh] relative bg-[#0d0e12] bg-speed-lines px-3 py-2 text-white">
+<body class="flex flex-col justify-between items-center w-full max-w-md mx-auto h-[100dvh] relative bg-[#0b0c10] speed-lines px-3 py-2 text-white">
 
-  <!-- 頂部：烏野高校狀態欄與計分板 -->
+  <!-- 頂部烏野高校隊徽與狀態控制列 -->
   <header class="w-full flex flex-col gap-1.5 z-20 shrink-0">
-    <!-- 學校條幅與快速功能按鈕 -->
     <div class="flex items-center justify-between border-b border-orange-500/30 pb-1.5">
       <div class="flex items-center gap-2">
-        <div class="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center font-manga text-xs font-black text-white shadow-md shadow-orange-600/40 border border-orange-400">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-amber-600 to-orange-500 flex items-center justify-center font-manga text-sm font-black text-white shadow-lg shadow-orange-600/40 border border-orange-300">
           飛
         </div>
         <div>
           <div class="flex items-center gap-1.5">
-            <span class="text-xs font-black tracking-wider text-orange-400 font-sport">KARASUNO</span>
-            <span class="text-[9px] bg-neutral-800 text-orange-300 px-1.5 py-0.2 rounded border border-neutral-700 font-bold" id="modeTag">特訓模式</span>
+            <span class="text-xs font-black tracking-wider text-orange-400 font-sport">KARASUNO 3D</span>
+            <span id="modeTag" class="text-[9px] bg-neutral-800 text-orange-300 px-1.5 py-0.5 rounded border border-neutral-700 font-bold">自主特訓</span>
           </div>
-          <p class="text-[9px] text-gray-400 tracking-tight">「頂の景色」有向數心算決戰</p>
+          <p class="text-[9px] text-gray-400">烏野高中排球部 · 有向數扣殺特訓場</p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5">
-        <button id="soundToggleBtn" class="w-8 h-8 rounded-lg bg-neutral-800/90 border border-neutral-700 active:scale-90 flex items-center justify-center text-sm shadow">
+        <button id="soundBtn" class="w-8 h-8 rounded-lg bg-neutral-900 border border-neutral-700 active:scale-90 flex items-center justify-center text-sm shadow">
           🔊
         </button>
-        <button id="tacticHelpBtn" class="px-2.5 h-8 rounded-lg bg-neutral-800/90 border border-orange-500/50 hover:bg-neutral-700 text-orange-400 text-xs font-bold active:scale-95 flex items-center gap-1 shadow">
+        <button id="tacticHelpBtn" class="px-2.5 h-8 rounded-lg bg-neutral-900 border border-orange-500/50 hover:bg-neutral-800 text-orange-400 text-xs font-bold active:scale-95 flex items-center gap-0.5 shadow">
           <span>秘笈</span>
         </button>
-        <button id="configModalBtn" class="px-2.5 h-8 rounded-lg bg-orange-600 active:bg-orange-500 text-white text-xs font-bold font-sport active:scale-95 shadow-md shadow-orange-600/30">
+        <button id="configModalBtn" class="px-2.5 h-8 rounded-lg bg-orange-600 hover:bg-orange-500 text-white text-xs font-bold font-sport active:scale-95 shadow-md shadow-orange-600/30">
           SET
         </button>
       </div>
     </div>
 
-    <!-- 經典比分板 (Scoreboard) -->
-    <div class="grid grid-cols-4 gap-1.5 bg-neutral-900/90 border-2 border-neutral-800 rounded-xl p-1.5 shadow-lg relative overflow-hidden backdrop-blur-sm">
-      <!-- 烏野得分 -->
+    <!-- 頂部計分板 (Scoreboard) -->
+    <div class="grid grid-cols-4 gap-1.5 bg-neutral-900/90 border border-neutral-800 rounded-xl p-1.5 shadow-xl relative overflow-hidden backdrop-blur-sm">
       <div class="flex flex-col items-center justify-center border-r border-neutral-800">
-        <span class="text-[9px] font-bold text-orange-400 tracking-wider">KARASUNO</span>
-        <span id="scoreText" class="text-xl font-black font-sport text-white tracking-tight">0</span>
+        <span class="text-[8px] font-bold text-orange-400 tracking-wider">SCORE</span>
+        <span id="scoreText" class="text-lg font-black font-sport text-white">0</span>
       </div>
-      <!-- 連擊扣殺 COMBO -->
       <div class="flex flex-col items-center justify-center border-r border-neutral-800">
-        <span class="text-[9px] font-bold text-yellow-400 tracking-wider">COMBO</span>
+        <span class="text-[8px] font-bold text-yellow-400 tracking-wider">COMBO</span>
         <div class="flex items-baseline gap-0.5">
-          <span id="comboText" class="text-xl font-black font-sport text-yellow-400">0</span>
+          <span id="comboText" class="text-lg font-black font-sport text-yellow-400">0</span>
           <span class="text-[8px] font-bold text-yellow-500">HIT</span>
         </div>
       </div>
-      <!-- 倒計時 / 題數 -->
       <div class="flex flex-col items-center justify-center border-r border-neutral-800">
-        <span id="timerTitle" class="text-[9px] font-bold text-cyan-400 tracking-wider">TIME</span>
-        <span id="timerText" class="text-xl font-black font-sport text-cyan-400">∞</span>
+        <span id="timerTitle" class="text-[8px] font-bold text-cyan-400 tracking-wider">COUNT</span>
+        <span id="timerText" class="text-lg font-black font-sport text-cyan-400">0</span>
       </div>
-      <!-- 排球體力槽 -->
       <div class="flex flex-col items-center justify-center px-1">
-        <span class="text-[9px] font-bold text-neutral-400 tracking-wider">STAMINA</span>
-        <div class="w-full bg-neutral-800 h-2.5 rounded-full overflow-hidden border border-neutral-700 mt-1">
+        <span class="text-[8px] font-bold text-neutral-400 tracking-wider">STAMINA</span>
+        <div class="w-full bg-neutral-800 h-2 rounded-full overflow-hidden border border-neutral-700 mt-1">
           <div id="staminaBar" class="bg-gradient-to-r from-orange-600 to-amber-400 h-full w-full transition-all duration-300"></div>
         </div>
       </div>
     </div>
   </header>
 
-  <!-- 中間核心：排球場戰術數軸與動畫 Canvas -->
+  <!-- 中間主要區域：3D Three.js 球場 Canvas + 題目戰術卡 -->
   <main class="w-full flex-1 flex flex-col justify-between my-1 relative min-h-0">
-    <!-- 排球球場動態畫布 (Volleyball Court & Net at 0) -->
-    <div class="w-full h-36 relative bg-gradient-to-b from-neutral-900 to-neutral-950 rounded-2xl border-2 border-neutral-800 overflow-hidden shadow-inner flex flex-col justify-between p-2">
-      <!-- 頂部狀態字 -->
-      <div class="flex justify-between items-center z-10 px-1 pointer-events-none">
-        <div class="flex items-center gap-1">
-          <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          <span id="courtStatusText" class="text-[10px] font-bold text-gray-300 tracking-wider">準備起跳 · 影山托球已到位</span>
-        </div>
-        <span id="equationRuleTip" class="text-[9px] font-black text-orange-400 bg-orange-950/70 border border-orange-500/40 px-1.5 py-0.5 rounded">
-          同號得正
+    
+    <!-- 3D 排球場渲染舞台 (Three.js Stage) -->
+    <div id="canvasContainer" class="w-full h-48 sm:h-52 relative rounded-2xl border-2 border-orange-500/40 overflow-hidden shadow-2xl bg-neutral-950">
+      <!-- 3D 數軸標示浮層 -->
+      <div class="absolute top-2 left-2 right-2 flex justify-between items-center z-10 pointer-events-none">
+        <span class="text-[10px] font-black text-rose-400 bg-black/60 px-2 py-0.5 rounded border border-rose-500/40">
+          烏野後場 (-)
+        </span>
+        <span class="text-[10px] font-black text-orange-400 bg-black/75 px-2 py-0.5 rounded border border-orange-500/70 shadow-sm font-sport">
+          NET 0 (球網)
+        </span>
+        <span class="text-[10px] font-black text-emerald-400 bg-black/60 px-2 py-0.5 rounded border border-emerald-500/40">
+          敵方場區 (+)
         </span>
       </div>
 
-      <!-- 原生 Canvas：繪製球場網、球員、排球拋物線、數軸標記 -->
-      <canvas id="courtCanvas" class="w-full flex-1 touch-none"></canvas>
-
-      <!-- 數軸數字輔助刻度 (動態對齊) -->
-      <div class="flex justify-between items-center text-[9px] font-bold text-neutral-500 border-t border-neutral-800 pt-1 z-10 px-2 font-sport">
-        <span class="text-red-400">-12 (我方底線)</span>
-        <span class="text-orange-400 font-black bg-neutral-900 px-1 rounded border border-orange-500/50">NET 0 (球網)</span>
-        <span class="text-emerald-400">+12 (敵方場區)</span>
+      <!-- 3D 視角重置 / 旋轉提示 -->
+      <div class="absolute bottom-2 left-2 z-10 pointer-events-none flex items-center gap-1 bg-black/50 px-2 py-0.5 rounded text-[8px] text-gray-300 font-bold border border-white/10">
+        <span>🏐 拖曳可轉動 3D 視角</span>
       </div>
 
-      <!-- 漫畫擬聲詞打擊彈出層 (ドン!! / ドゴォォォン!!) -->
-      <div id="mangaEffectLayer" class="absolute inset-0 flex items-center justify-center pointer-events-none hidden z-30">
-        <div id="mangaText" class="font-manga text-5xl font-black text-orange-500 tracking-tighter drop-shadow-[0_4px_12px_rgba(255,119,0,0.9)] text-stroke">
+      <!-- 漫畫擬聲詞字樣特效層 (ドン!! / ドゴォォォン!!) -->
+      <div id="mangaOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none z-30 hidden">
+        <div id="mangaText" class="font-manga text-5xl font-black text-orange-500 tracking-tighter drop-shadow-[0_4px_16px_rgba(255,117,0,0.95)]">
           ドン!!
         </div>
       </div>
+
+      <!-- Three.js 注入 Canvas -->
+      <canvas id="threeCanvas" class="w-full h-full block"></canvas>
     </div>
 
-    <!-- 題目看板 (黑板戰術卡) -->
-    <div id="tacticCard" class="w-full bg-neutral-900/95 border-2 border-neutral-800 rounded-2xl p-3 flex flex-col items-center justify-center relative shadow-xl my-1.5 transition-all">
-      <div class="absolute -top-2.5 bg-gradient-to-r from-orange-600 to-amber-500 px-3 py-0.5 rounded-full text-[10px] font-black text-black tracking-widest uppercase shadow">
-        TACTICAL FORMULA
-      </div>
-      
-      <!-- 主算式題目 -->
-      <div id="mathEquation" class="text-3xl sm:text-4xl font-black font-sport tracking-wider text-white my-1 text-center select-none py-1">
-        (-6) + (+9) = ?
-      </div>
-
-      <!-- 解題引導動態提示 -->
-      <div id="guidanceBox" class="text-[11px] text-gray-300 font-bold bg-neutral-950/80 px-2.5 py-1 rounded-lg border border-neutral-800 flex items-center gap-1.5 max-w-full text-center">
-        <span>🏐</span>
-        <span id="guidanceText">從 -6 出發，加上正數 = 向敵方場地前進 9 格！</span>
+    <!-- 題目看板卡片 (戰術卡) -->
+    <div id="questionCard" class="w-full bg-neutral-900/95 border-2 border-neutral-800 rounded-2xl p-2.5 flex flex-col items-center justify-center relative shadow-xl my-1 transition-all">
+      <div class="flex items-center justify-between w-full px-1">
+        <div class="flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
+          <span id="questionCategory" class="text-[9px] font-black text-orange-400 uppercase tracking-widest">
+            烏野攻防 · 加法練習
+          </span>
+        </div>
+        <span id="ruleTipTag" class="text-[9px] font-black text-amber-300 bg-amber-950/60 border border-amber-500/40 px-1.5 py-0.5 rounded">
+          加上正數 ➡️ 向右前進
+        </span>
       </div>
 
-      <!-- 判定浮層 (成功扣殺 / 遭攔網失誤) -->
-      <div id="answerFeedbackModal" class="absolute inset-0 bg-neutral-950/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-3 hidden z-40">
-        <h3 id="feedbackMainTitle" class="text-2xl font-black font-manga text-orange-400 mb-1">
+      <!-- 算式主體 -->
+      <div id="equationDisplay" class="text-3xl sm:text-4xl font-black font-sport tracking-wider text-white my-1 text-center py-0.5 select-none">
+        (-4) + (+7) = ?
+      </div>
+
+      <!-- 步驟提示引導 -->
+      <div id="stepGuidance" class="text-[11px] text-gray-300 font-bold bg-neutral-950/80 px-2.5 py-1 rounded-lg border border-neutral-800 flex items-center gap-1 max-w-full text-center">
+        <span>🎯</span>
+        <span id="stepGuidanceText">從 -4 出發，加上正數 = 向右飛躍 7 格！</span>
+      </div>
+
+      <!-- 答題反饋浮層 (扣殺成功 / 觸網出界) -->
+      <div id="feedbackLayer" class="absolute inset-0 bg-neutral-950/95 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center p-3 hidden z-40">
+        <h3 id="feedbackTitle" class="text-2xl font-black font-manga text-orange-400 mb-0.5">
           ドゴォォォン!! 完美暴扣！
         </h3>
-        <p id="feedbackDetailText" class="text-xs text-neutral-300 font-bold text-center leading-relaxed max-w-[90%]">
-          負負得正！(-4) - (-7) 相當於 (-4) + 7 = +3！
+        <p id="feedbackExplanation" class="text-xs text-neutral-300 font-bold text-center leading-relaxed max-w-[90%]">
+          負負得正！(-4) - (-7) ＝ +3！
         </p>
       </div>
     </div>
 
-    <!-- 4 個大尺寸拇指答題按鈕 -->
+    <!-- 4 個大尺寸拇指選項按鈕 -->
     <div class="grid grid-cols-2 gap-2 w-full shrink-0" id="optionsContainer">
-      <button class="choice-btn h-14 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700/90 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
-        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">1</span>
-        <span class="choice-val">0</span>
+      <button class="choice-btn h-13 py-3 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
+        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">A</span>
+        <span class="choice-text">0</span>
       </button>
-      <button class="choice-btn h-14 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700/90 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
-        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">2</span>
-        <span class="choice-val">0</span>
+      <button class="choice-btn h-13 py-3 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
+        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">B</span>
+        <span class="choice-text">0</span>
       </button>
-      <button class="choice-btn h-14 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700/90 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
-        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">3</span>
-        <span class="choice-val">0</span>
+      <button class="choice-btn h-13 py-3 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
+        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">C</span>
+        <span class="choice-text">0</span>
       </button>
-      <button class="choice-btn h-14 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700/90 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
-        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">4</span>
-        <span class="choice-val">0</span>
+      <button class="choice-btn h-13 py-3 bg-neutral-900 active:bg-orange-600 border-2 border-neutral-700 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all">
+        <span class="w-5 h-5 rounded-full bg-orange-500/20 text-[10px] flex items-center justify-center text-orange-400 font-sport border border-orange-500/40">D</span>
+        <span class="choice-text">0</span>
       </button>
     </div>
   </main>
 
-  <!-- 底部快捷橫條 -->
+  <!-- 底部快速切換欄 -->
   <footer class="w-full flex items-center justify-between text-[10px] font-bold text-neutral-400 border-t border-neutral-800/80 pt-1.5 pb-1 shrink-0">
-    <div class="flex items-center gap-1.5">
-      <span class="text-orange-400">● 快速特訓:</span>
+    <div class="flex items-center gap-1">
+      <span class="text-orange-400">特訓項目:</span>
       <button id="quickOpAddSub" class="px-2 py-0.5 bg-neutral-800 rounded text-gray-200 border border-neutral-700 active:bg-orange-600">加減</button>
       <button id="quickOpMulDiv" class="px-2 py-0.5 bg-neutral-800 rounded text-gray-200 border border-neutral-700 active:bg-orange-600">乘除</button>
       <button id="quickOpAll" class="px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black">四則</button>
     </div>
-    <span class="text-neutral-500 italic">「下一個球一定能接住！」</span>
+    <span class="text-neutral-500 italic">「永遠向上看！」</span>
   </footer>
 
-  <!-- 彈窗1：烏野排球部戰術秘笈 (Cheatsheet Modal) -->
+  <!-- 彈窗1：烏養教練戰術秘笈 (Cheatsheet Modal) -->
   <div id="ruleModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-neutral-900 border-2 border-orange-500 rounded-2xl w-full max-w-sm p-4 text-xs shadow-2xl relative max-h-[85vh] overflow-y-auto flex flex-col">
       <div class="flex justify-between items-center mb-3 border-b border-neutral-800 pb-2">
         <h3 class="text-sm font-black text-orange-400 flex items-center gap-1 font-sport">
-          <span>烏養教練戰術筆記 · 有向數秘笈</span>
+          <span>📖 烏養教練戰術秘笈 · 有向數口訣</span>
         </h3>
         <button id="closeRuleModalBtn" class="text-gray-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
       <div class="space-y-2.5 text-neutral-300 leading-relaxed">
         <div class="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-          <h4 class="font-black text-orange-400 text-xs mb-1">1. 球網為零點（Net = 0）</h4>
-          <p class="text-[11px]"><span class="text-emerald-400 font-bold">正數 (+)</span>：敵方場地/躍起高空；<br><span class="text-red-400 font-bold">負數 (-)</span>：我方後場/地面潛救接球。</p>
+          <h4 class="font-black text-orange-400 text-xs mb-1">1. 球網 0 點與 3D 數軸</h4>
+          <p class="text-[11px]">• <span class="text-emerald-400 font-bold">正數 (+)</span>：球網右側敵方場區 / 躍起高度。</p>
+          <p class="text-[11px]">• <span class="text-rose-400 font-bold">負數 (-)</span>：球網左側我方後場 / 地面魚躍防守。</p>
         </div>
 
         <div class="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-          <h4 class="font-black text-yellow-400 text-xs mb-1">2. 加減法秘訣（位移法則）</h4>
+          <h4 class="font-black text-yellow-400 text-xs mb-1">2. 加減法位移神技</h4>
           <p class="text-[11px]">• <span class="text-emerald-400 font-bold">加上正數 (+ +)</span>：向右突破扣殺 ➡️</p>
-          <p class="text-[11px]">• <span class="text-red-400 font-bold">加上負數 (+ -)</span>：向後方退防 ⬅️</p>
+          <p class="text-[11px]">• <span class="text-rose-400 font-bold">加上負數 (+ -)</span>：向後方退防 ⬅️</p>
           <p class="text-[11px]">• <span class="text-yellow-400 font-bold">減去負數 (- -)</span>：<strong>負負得正！</strong> 宛如絕地背飛反擊向右躍進！➡️</p>
-          <p class="text-[10px] text-gray-400 mt-1 italic">例：(-5) - (-8) = (-5) + 8 = +3</p>
+          <p class="text-[10px] text-gray-400 mt-1 italic">例：(-3) - (-5) ＝ (-3) + 5 ＝ +2</p>
         </div>
 
         <div class="bg-neutral-950 p-2.5 rounded-xl border border-neutral-800">
-          <h4 class="font-black text-cyan-400 text-xs mb-1">3. 乘除法黃金口訣（極速判定）</h4>
+          <h4 class="font-black text-cyan-400 text-xs mb-1">3. 乘除法黃金法則</h4>
           <ul class="text-[11px] space-y-1">
             <li><span class="text-emerald-400 font-bold">同號得正 (+)</span>：(+) × (+) = (+)，(-) × (-) = (+)</li>
-            <li><span class="text-red-400 font-bold">異號得負 (-)</span>：(+) × (-) = (-)，(-) × (+) = (-)</li>
+            <li><span class="text-rose-400 font-bold">異號得負 (-)</span>：(+) × (-) = (-)，(-) × (+) = (-)</li>
           </ul>
-          <p class="text-[10px] text-gray-400 mt-1 italic">例：(-7) × (-6) = +42 ； (-36) ÷ (+4) = -9</p>
+          <p class="text-[10px] text-gray-400 mt-1 italic">除法口訣完全相同：(-24) ÷ (-4) = +6</p>
         </div>
       </div>
 
       <button id="ruleConfirmBtn" class="mt-4 w-full py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl text-xs font-sport tracking-wider shadow active:scale-95 transition-all">
-        了解！返回比賽 (ROGER!)
+        了解！重返球場 (ROGER!)
       </button>
     </div>
   </div>
 
-  <!-- 彈窗2：遊戲設定與模式切換 (Settings Modal) -->
+  <!-- 彈窗2：賽事與難度設定 (Settings Modal) -->
   <div id="settingsModal" class="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-neutral-900 border-2 border-orange-500 rounded-2xl w-full max-w-sm p-4 shadow-2xl relative flex flex-col">
       <div class="flex justify-between items-center mb-3 border-b border-neutral-800 pb-2">
-        <h3 class="text-sm font-black text-orange-400 font-sport">MATCH SETTING · 戰術設定</h3>
+        <h3 class="text-sm font-black text-orange-400 font-sport">TACTICAL SETUP · 戰術設定</h3>
         <button id="closeSettingsModalBtn" class="text-gray-400 hover:text-white text-xl font-bold p-1">✕</button>
       </div>
 
-      <!-- 模式 -->
+      <!-- 模式切換 -->
       <div class="mb-3">
-        <label class="block text-xs font-bold text-gray-300 mb-1.5">賽事模式 (Game Mode)</label>
+        <label class="block text-xs font-bold text-gray-300 mb-1.5">比賽模式</label>
         <div class="grid grid-cols-2 gap-2">
-          <button id="btnSetPractice" class="mode-opt py-2 px-2 rounded-xl border text-xs font-black transition-all bg-orange-600 text-white border-orange-400">
-            🏐 特訓練習<br><span class="text-[9px] font-normal">無限時 · 步步教學</span>
+          <button id="btnModePractice" class="mode-btn py-2 px-2 rounded-xl border text-xs font-black transition-all bg-orange-600 text-white border-orange-400">
+            🏐 自主特訓<br><span class="text-[9px] font-normal">無限時 · 步步教學</span>
           </button>
-          <button id="btnSetTournament" class="mode-opt py-2 px-2 rounded-xl border text-xs font-black transition-all bg-neutral-800 text-gray-400 border-neutral-700">
-            🔥 60s 全國大賽<br><span class="text-[9px] font-normal">高壓限時 · 連扣破紀錄</span>
+          <button id="btnModeTournament" class="mode-btn py-2 px-2 rounded-xl border text-xs font-black transition-all bg-neutral-800 text-gray-400 border-neutral-700">
+            🔥 60s 全國大賽<br><span class="text-[9px] font-normal">高壓限時 · 連擊加成</span>
           </button>
         </div>
       </div>
 
-      <!-- 運算類型 -->
+      <!-- 運算項目 -->
       <div class="mb-3">
-        <label class="block text-xs font-bold text-gray-300 mb-1.5">運算題型 (Operation)</label>
-        <div class="grid grid-cols-3 gap-1.5 text-xs font-bold" id="opButtonGroup">
-          <button data-op="all" class="set-op-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400">綜合四則</button>
-          <button data-op="addsub" class="set-op-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">純加減</button>
-          <button data-op="muldiv" class="set-op-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">純乘除</button>
+        <label class="block text-xs font-bold text-gray-300 mb-1.5">運算項目</label>
+        <div class="grid grid-cols-3 gap-1.5 text-xs font-bold" id="opSelectGroup">
+          <button data-op="all" class="op-choice-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400">綜合四則</button>
+          <button data-op="addsub" class="op-choice-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">純加減</button>
+          <button data-op="muldiv" class="op-choice-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">純乘除</button>
         </div>
       </div>
 
       <!-- 難度等級 -->
       <div class="mb-4">
-        <label class="block text-xs font-bold text-gray-300 mb-1.5">難度等級 (Difficulty)</label>
-        <div class="grid grid-cols-3 gap-1.5 text-xs font-bold" id="diffButtonGroup">
-          <button data-diff="1" class="set-diff-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">初級 (1位數)</button>
-          <button data-diff="2" class="set-diff-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400">中級 (標準)</button>
-          <button data-diff="3" class="set-diff-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">魔王 (速攻)</button>
+        <label class="block text-xs font-bold text-gray-300 mb-1.5">難度等級</label>
+        <div class="grid grid-cols-3 gap-1.5 text-xs font-bold" id="diffSelectGroup">
+          <button data-diff="1" class="diff-choice-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">初級 (1位數)</button>
+          <button data-diff="2" class="diff-choice-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400">中級 (標準)</button>
+          <button data-diff="3" class="diff-choice-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700">魔王 (速攻)</button>
         </div>
       </div>
 
-      <button id="applyAndStartBtn" class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-black font-black rounded-xl text-sm font-sport tracking-wider shadow-lg active:scale-95 transition-all">
+      <button id="applySettingsBtn" class="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 text-black font-black rounded-xl text-sm font-sport tracking-wider shadow-lg active:scale-95 transition-all">
         SERVE! 開球發動攻擊
       </button>
     </div>
   </div>
 
-  <!-- 彈窗3：錦標賽結算畫面 (Game Over Modal) -->
+  <!-- 彈窗3：大賽結算畫面 (Match Result Modal) -->
   <div id="resultModal" class="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
     <div class="bg-neutral-900 border-2 border-orange-500 rounded-2xl w-full max-w-sm p-5 text-center shadow-2xl relative">
       <div class="w-14 h-14 mx-auto mb-2 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-3xl shadow-lg shadow-orange-500/30">
         🏆
       </div>
       <h3 class="text-[10px] uppercase font-black tracking-widest text-orange-400 font-sport">MATCH FINISHED</h3>
-      <h2 id="finalRankTitle" class="text-2xl font-black font-manga text-white mb-2">烏野新傳奇！</h2>
+      <h2 id="finalTitle" class="text-2xl font-black font-manga text-white mb-2">烏野小巨人降臨！</h2>
 
       <div class="grid grid-cols-2 gap-2 my-3 bg-neutral-950 p-2.5 rounded-xl border border-neutral-800 text-xs font-bold">
         <div class="p-1.5 border-r border-neutral-800">
           <div class="text-[9px] text-gray-400">總得分 (SCORE)</div>
-          <div id="finalScoreVal" class="text-2xl font-black text-orange-400 font-sport">0</div>
+          <div id="finalScore" class="text-2xl font-black text-orange-400 font-sport">0</div>
         </div>
         <div class="p-1.5">
           <div class="text-[9px] text-gray-400">最高連扣 (MAX COMBO)</div>
-          <div id="finalComboVal" class="text-2xl font-black text-yellow-400 font-sport">0</div>
+          <div id="finalCombo" class="text-2xl font-black text-yellow-400 font-sport">0</div>
         </div>
         <div class="p-1.5 border-r border-neutral-800">
           <div class="text-[9px] text-gray-400">總接球題數</div>
@@ -340,34 +346,34 @@
         </div>
         <div class="p-1.5">
           <div class="text-[9px] text-gray-400">接球準確率</div>
-          <div id="finalAccuracyVal" class="text-base text-cyan-400">100%</div>
+          <div id="finalAccuracy" class="text-base text-cyan-400">100%</div>
         </div>
       </div>
 
-      <p id="coachSummaryQuote" class="text-xs text-neutral-300 italic mb-4 leading-relaxed">
-        「球還沒有落地，正負數的計算也是！多加練習你就是下一任小巨人！」
+      <p id="coachComment" class="text-xs text-neutral-300 italic mb-4 leading-relaxed">
+        「球還沒有落地！正負數的計算也是，多加練習你就是下一任小巨人！」
       </p>
 
       <div class="flex gap-2">
-        <button id="resultRestartBtn" class="flex-1 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl text-xs font-sport tracking-wider shadow active:scale-95 transition-all">
-          RETRY 再次挑戰
+        <button id="resultRetryBtn" class="flex-1 py-2.5 bg-orange-600 hover:bg-orange-500 text-white font-black rounded-xl text-xs font-sport tracking-wider shadow active:scale-95 transition-all">
+          AGAIN 再次挑戰
         </button>
-        <button id="resultToPracticeBtn" class="flex-1 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-gray-300 font-bold rounded-xl text-xs border border-neutral-700 active:scale-95 transition-all">
-          回特訓模式
+        <button id="resultPracticeBtn" class="flex-1 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-gray-300 font-bold rounded-xl text-xs border border-neutral-700 active:scale-95 transition-all">
+          自主特訓
         </button>
       </div>
     </div>
   </div>
 
   <script>
-    /* 原生 Web Audio API 合成音效引擎（無需任何外部音樂 mp3 檔案） */
-    class HaikyuuAudioEngine {
+    /* 原生 Web Audio API 音效合成引擎 (無外部檔案依賴) */
+    class HaikyuuSoundFX {
       constructor() {
         this.ctx = null;
-        this.isMuted = false;
+        this.muted = false;
       }
 
-      initCtx() {
+      init() {
         if (!this.ctx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           this.ctx = new AudioContext();
@@ -377,82 +383,87 @@
         }
       }
 
-      // 排球暴扣落地聲 (Heavy Spike Thump)
-      playSpikeSmash() {
-        if (this.isMuted) return;
-        this.initCtx();
+      // 排球暴扣重擊地面砰聲 (Heavy Spike Thud)
+      playSpike() {
+        if (this.muted) return;
+        this.init();
         try {
           const now = this.ctx.currentTime;
           const osc = this.ctx.createOscillator();
           const gain = this.ctx.createGain();
-          
+
           osc.type = 'triangle';
-          osc.frequency.setValueAtTime(160, now);
-          osc.frequency.exponentialRampToValueAtTime(30, now + 0.22);
+          osc.frequency.setValueAtTime(170, now);
+          osc.frequency.exponentialRampToValueAtTime(32, now + 0.24);
 
           gain.gain.setValueAtTime(1.0, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.24);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.26);
 
           osc.connect(gain);
           gain.connect(this.ctx.destination);
 
           osc.start(now);
-          osc.stop(now + 0.25);
+          osc.stop(now + 0.26);
         } catch (e) {
-          console.warn('Audio play error', e);
+          console.warn(e);
         }
       }
 
-      // 得分慶祝 (Score Chime)
-      playScoreSuccess() {
-        if (this.isMuted) return;
-        this.initCtx();
+      // 觸網 / 攔網聲音 (Net Hit / Block)
+      playNetHit() {
+        if (this.muted) return;
+        this.init();
         try {
           const now = this.ctx.currentTime;
-          const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-          notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.exponentialRampToValueAtTime(60, now + 0.28);
+
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+
+          osc.start(now);
+          osc.stop(now + 0.3);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      // 完美得分和弦 (Score Chime)
+      playScore() {
+        if (this.muted) return;
+        this.init();
+        try {
+          const now = this.ctx.currentTime;
+          const chord = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+          chord.forEach((freq, i) => {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.05);
-            gain.gain.setValueAtTime(0.18, now + idx * 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.28);
+            osc.frequency.setValueAtTime(freq, now + i * 0.05);
+            gain.gain.setValueAtTime(0.2, now + i * 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.05 + 0.35);
+
             osc.connect(gain);
             gain.connect(this.ctx.destination);
-            osc.start(now + idx * 0.05);
-            osc.stop(now + idx * 0.05 + 0.3);
+            osc.start(now + i * 0.05);
+            osc.stop(now + i * 0.05 + 0.35);
           });
         } catch (e) {
           console.warn(e);
         }
       }
 
-      // 失誤 / 被攔網扣球音效 (Blocked sound)
-      playBlockedBuzz() {
-        if (this.isMuted) return;
-        this.initCtx();
-        try {
-          const now = this.ctx.currentTime;
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(130, now);
-          osc.frequency.exponentialRampToValueAtTime(55, now + 0.3);
-          gain.gain.setValueAtTime(0.35, now);
-          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.32);
-          osc.connect(gain);
-          gain.connect(this.ctx.destination);
-          osc.start(now);
-          osc.stop(now + 0.32);
-        } catch (e) {
-          console.warn(e);
-        }
-      }
-
-      // 裁判口哨聲 (Referee Whistle)
+      // 裁判口哨 (Whistle)
       playWhistle() {
-        if (this.isMuted) return;
-        this.initCtx();
+        if (this.muted) return;
+        this.init();
         try {
           const now = this.ctx.currentTime;
           [2600, 2900].forEach(f => {
@@ -460,12 +471,13 @@
             const gain = this.ctx.createGain();
             osc.type = 'sine';
             osc.frequency.setValueAtTime(f, now);
-            gain.gain.setValueAtTime(0.15, now);
-            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            gain.gain.setValueAtTime(0.18, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start(now);
-            osc.stop(now + 0.3);
+            osc.stop(now + 0.35);
           });
         } catch (e) {
           console.warn(e);
@@ -473,12 +485,12 @@
       }
     }
 
-    const sound = new HaikyuuAudioEngine();
+    const sound = new HaikyuuSoundFX();
 
     const gameState = {
       mode: 'practice',      // 'practice' | 'tournament'
       operation: 'all',      // 'all' | 'addsub' | 'muldiv'
-      difficulty: 2,         // 1: 初級, 2: 中級, 3: 魔王
+      difficulty: 2,         // 1, 2, 3
       score: 0,
       combo: 0,
       maxCombo: 0,
@@ -491,26 +503,24 @@
       stamina: 100
     };
 
-    // 格式化有向數（包含括號與正負號）
-    function formatDirected(num, forceParens = true) {
-      if (num < 0) return forceParens ? `(${num})` : `${num}`;
-      if (num > 0) return forceParens ? `(+${num})` : `+${num}`;
+    function formatNum(n, forceParens = true) {
+      if (n < 0) return forceParens ? `(${n})` : `${n}`;
+      if (n > 0) return forceParens ? `(+${n})` : `+${n}`;
       return `0`;
     }
 
-    function getRandomInt(min, max) {
+    function randInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function getRandomNonZero(min, max) {
+    function randNonZero(min, max) {
       let v = 0;
-      while (v === 0) {
-        v = getRandomInt(min, max);
-      }
+      while (v === 0) v = randInt(min, max);
       return v;
     }
 
-    function generateMathProblem() {
+    // 題目生成器
+    function generateProblem() {
       let opPool = [];
       if (gameState.operation === 'all') opPool = ['+', '-', '×', '÷'];
       else if (gameState.operation === 'addsub') opPool = ['+', '-'];
@@ -518,103 +528,99 @@
 
       const chosenOp = opPool[Math.floor(Math.random() * opPool.length)];
       const diff = gameState.difficulty;
+      const bound = diff === 1 ? 7 : (diff === 2 ? 12 : 16);
 
       let a = 0, b = 0, ans = 0;
-      let startValue = 0;
-      let targetValue = 0;
+      let startX = 0, targetX = 0;
       let formulaText = '';
-      let guidanceNote = '';
-      let stepDetail = '';
+      let guidance = '';
+      let explanation = '';
       let ruleTip = '';
 
-      const limit = diff === 1 ? 8 : (diff === 2 ? 14 : 20);
-
       if (chosenOp === '+') {
-        a = getRandomNonZero(-limit, limit);
-        b = getRandomNonZero(-limit, limit);
+        a = randNonZero(-bound, bound);
+        b = randNonZero(-bound, bound);
         ans = a + b;
-        startValue = a;
-        targetValue = ans;
-        formulaText = `${formatDirected(a)} + ${formatDirected(b)}`;
-        ruleTip = b > 0 ? '加上正數 ➡️ 向右' : '加上負數 ⬅️ 向左';
+        startX = a;
+        targetX = ans;
+        formulaText = `${formatNum(a)} + ${formatNum(b)}`;
+        ruleTip = b > 0 ? '加上正數 ➡️ 向右躍進' : '加上負數 ⬅️ 向左退防';
 
         if (b > 0) {
-          guidanceNote = `從 ${formatDirected(a)} 出發，加上正數 = 向右前進 ${b} 格！`;
-          stepDetail = `${formatDirected(a)} + (+${b}) = 在數軸向右移動 ${b} 格，落點為 ${ans}`;
+          guidance = `從 ${formatNum(a)} 躍起，加上正數 = 向敵方場地躍進 ${b} 格！`;
+          explanation = `${formatNum(a)} + (+${b}) 等於在 3D 數軸向右前進 ${b} 格，精確落點為 ${ans}`;
         } else {
-          guidanceNote = `加上負數等同於向左後退：+ (${b}) ＝ - ${Math.abs(b)}`;
-          stepDetail = `${formatDirected(a)} + (${b}) ＝ ${a} - ${Math.abs(b)} ＝ ${ans}`;
+          guidance = `加上負數等同向左後退：+ (${b}) ＝ - ${Math.abs(b)}`;
+          explanation = `${formatNum(a)} + (${b}) ＝ ${a} - ${Math.abs(b)} ＝ ${ans}`;
         }
 
       } else if (chosenOp === '-') {
-        a = getRandomNonZero(-limit, limit);
-        b = getRandomNonZero(-limit, limit);
+        a = randNonZero(-bound, bound);
+        b = randNonZero(-bound, bound);
         ans = a - b;
-        startValue = a;
-        targetValue = ans;
-        formulaText = `${formatDirected(a)} - ${formatDirected(b)}`;
+        startX = a;
+        targetX = ans;
+        formulaText = `${formatNum(a)} - ${formatNum(b)}`;
 
         if (b < 0) {
           ruleTip = '負負得正 ➡️ 絕地反擊';
-          guidanceNote = `減去負數：負負得正！方向逆轉為向右前進！`;
-          stepDetail = `${formatDirected(a)} - (${b}) ＝ ${a} + ${Math.abs(b)} ＝ ${ans}`;
+          guidance = `減去負數：負負得正！方向逆轉為向右前進！`;
+          explanation = `${formatNum(a)} - (${b}) ＝ ${a} + ${Math.abs(b)} ＝ ${ans}（神乎其技的向右反擊！）`;
         } else {
-          ruleTip = '減去正數 ⬅️ 向左位移';
-          guidanceNote = `減去正數，在數軸向左倒退 ${b} 格！`;
-          stepDetail = `${formatDirected(a)} - (+${b}) ＝ ${a} - ${b} ＝ ${ans}`;
+          ruleTip = '減去正數 ⬅️ 向左退防';
+          guidance = `減去正數，在 3D 數軸向左後退 ${b} 格！`;
+          explanation = `${formatNum(a)} - (+${b}) ＝ ${a} - ${b} ＝ ${ans}`;
         }
 
       } else if (chosenOp === '×') {
-        const factorMax = diff === 1 ? 5 : (diff === 2 ? 9 : 12);
-        a = getRandomNonZero(-factorMax, factorMax);
-        b = getRandomNonZero(-factorMax, factorMax);
+        const factorMax = diff === 1 ? 5 : (diff === 2 ? 8 : 11);
+        a = randNonZero(-factorMax, factorMax);
+        b = randNonZero(-factorMax, factorMax);
         ans = a * b;
-        startValue = 0;
-        targetValue = ans;
-        formulaText = `${formatDirected(a)} × ${formatDirected(b)}`;
+        startX = 0;
+        targetX = ans;
+        formulaText = `${formatNum(a)} × ${formatNum(b)}`;
 
-        const sameSign = (a > 0 && b > 0) || (a < 0 && b < 0);
-        ruleTip = sameSign ? '同號得正 (+)' : '異號得負 (-)';
+        const isSame = (a > 0 && b > 0) || (a < 0 && b < 0);
+        ruleTip = isSame ? '同號得正 (+)' : '異號得負 (-)';
 
-        if (sameSign) {
-          guidanceNote = `同號得正！兩負相乘或兩正相乘結果必定為「正數」！`;
-          stepDetail = `符號相同為正數：${Math.abs(a)} × ${Math.abs(b)} ＝ +${ans}`;
+        if (isSame) {
+          guidance = `同號得正！兩正或兩負相乘，結果必定為正數 (+)！`;
+          explanation = `兩數同號得正：${Math.abs(a)} × ${Math.abs(b)} ＝ +${ans}`;
         } else {
-          guidanceNote = `異號得負！一正一負相乘必定為「負數」！`;
-          stepDetail = `符號相異為負數：-(${Math.abs(a)} × ${Math.abs(b)}) ＝ ${ans}`;
+          guidance = `異號得負！一正一負相乘，結果必定為負數 (-)！`;
+          explanation = `兩數異號得負：-(${Math.abs(a)} × ${Math.abs(b)}) ＝ ${ans}`;
         }
 
       } else if (chosenOp === '÷') {
-        const divMax = diff === 1 ? 5 : (diff === 2 ? 8 : 11);
-        b = getRandomNonZero(-divMax, divMax);
-        const quotient = getRandomNonZero(-divMax, divMax);
-        a = b * quotient; // 保證整除
-        ans = quotient;
-        startValue = 0;
-        targetValue = ans;
-        formulaText = `${formatDirected(a)} ÷ ${formatDirected(b)}`;
+        const divMax = diff === 1 ? 4 : (diff === 2 ? 7 : 10);
+        b = randNonZero(-divMax, divMax);
+        const quot = randNonZero(-divMax, divMax);
+        a = b * quot;
+        ans = quot;
+        startX = 0;
+        targetX = ans;
+        formulaText = `${formatNum(a)} ÷ ${formatNum(b)}`;
 
-        const sameSign = (a > 0 && b > 0) || (a < 0 && b < 0);
-        ruleTip = sameSign ? '同號得正 (+)' : '異號得負 (-)';
+        const isSame = (a > 0 && b > 0) || (a < 0 && b < 0);
+        ruleTip = isSame ? '同號得正 (+)' : '異號得負 (-)';
 
-        if (sameSign) {
-          guidanceNote = `除法同號得正：兩數符號相同，商為正數！`;
-          stepDetail = `兩數同號：${a} ÷ ${b} ＝ +${ans}`;
+        if (isSame) {
+          guidance = `除法同號得正：兩負或兩正相除，商為正數！`;
+          explanation = `兩數同號得正：${a} ÷ ${b} ＝ +${ans}`;
         } else {
-          guidanceNote = `除法異號得負：一正一負相除，商為負數！`;
-          stepDetail = `兩數異號：${a} ÷ ${b} ＝ ${ans}`;
+          guidance = `除法異號得負：一正一負相除，商為負數！`;
+          explanation = `兩數異號得負：${a} ÷ ${b} ＝ ${ans}`;
         }
       }
 
-      // 生成4個互不相同的干擾選項
+      // 生成選項
       const optionsSet = new Set([ans]);
-      if (ans !== 0) {
-        optionsSet.add(-ans); // 經典反號干擾
-      }
+      if (ans !== 0) optionsSet.add(-ans);
 
       while (optionsSet.size < 4) {
-        const offset = getRandomNonZero(-4, 4);
-        optionsSet.add(ans + offset);
+        const delta = randNonZero(-4, 4);
+        optionsSet.add(ans + delta);
       }
 
       const options = Array.from(optionsSet).sort(() => Math.random() - 0.5);
@@ -622,217 +628,552 @@
       return {
         op: chosenOp,
         a, b, ans,
-        startValue,
-        targetValue,
+        startX, targetX,
         formulaText,
-        guidanceNote,
-        stepDetail,
+        guidance,
+        explanation,
         ruleTip,
         options
       };
     }
 
-    const canvas = document.getElementById('courtCanvas');
-    const ctx = canvas.getContext('2d');
-    let animBallX = 0;
-    let animBallY = 0;
-    let animTargetX = 0;
-    let animTargetY = 0;
-    let isAnimatingSmash = false;
-    let smashProgress = 0;
+    class Haikyuu3DCourt {
+      constructor(canvasId) {
+        this.canvas = document.getElementById(canvasId);
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.ball = null;
+        this.net = null;
+        this.netMeshGroup = null;
+        this.impactSparkGroup = null;
+        this.floorRipple = null;
+        this.trailPoints = [];
+        this.trailLine = null;
 
-    function resizeCanvas() {
-      const rect = canvas.getBoundingClientRect();
-      canvas.width = rect.width * window.devicePixelRatio;
-      canvas.height = rect.height * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    }
-    window.addEventListener('resize', resizeCanvas);
+        // 動畫控制
+        this.animating = false;
+        this.animStartTime = 0;
+        this.animDuration = 700;
+        this.animStartPos = new THREE.Vector3(0, 1.5, 0);
+        this.animEndPos = new THREE.Vector3(0, 0.4, 0);
+        this.animArcHeight = 3.5;
+        this.animCallback = null;
+        this.isErrorAnimation = false;
 
-    // 數值換算至 Canvas X 座標 (以 0 為中線 Net)
-    function valueToCanvasX(val, width, range = 14) {
-      const netX = width / 2;
-      const step = (width * 0.45) / range;
-      return Math.max(16, Math.min(width - 16, netX + (val * step)));
-    }
+        // 旋轉互動
+        this.isDragging = false;
+        this.prevMouseX = 0;
+        this.courtRotY = 0;
 
-    function drawCourt(currentProblem, progress = 0) {
-      const w = canvas.getBoundingClientRect().width;
-      const h = canvas.getBoundingClientRect().height;
-      if (w === 0 || h === 0) return;
-
-      ctx.clearRect(0, 0, w, h);
-
-      // 1. 球場木質地面色塊與中線
-      ctx.fillStyle = 'rgba(230, 145, 56, 0.08)';
-      ctx.fillRect(0, 0, w, h);
-
-      const netX = w / 2;
-      const groundY = h - 20;
-
-      // 2. 數軸底線
-      ctx.beginPath();
-      ctx.strokeStyle = '#404040';
-      ctx.lineWidth = 2;
-      ctx.moveTo(10, groundY);
-      ctx.lineTo(w - 10, groundY);
-      ctx.stroke();
-
-      // 3. 繪製排球球網 (Net 0)
-      ctx.beginPath();
-      ctx.strokeStyle = '#ff7700';
-      ctx.lineWidth = 3;
-      ctx.moveTo(netX, groundY);
-      ctx.lineTo(netX, 22);
-      ctx.stroke();
-
-      // 球網格線
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-      ctx.lineWidth = 1;
-      for (let y = 25; y < groundY; y += 8) {
-        ctx.beginPath();
-        ctx.moveTo(netX - 6, y);
-        ctx.lineTo(netX + 6, y);
-        ctx.stroke();
+        this.init();
       }
 
-      // 球網 0 點標籤
-      ctx.fillStyle = '#ff7700';
-      ctx.font = 'bold 9px Bungee, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('NET (0)', netX, 16);
+      // 生成 Mikasa 經典三色排球動態紋理
+      createVolleyballTexture() {
+        const size = 512;
+        const cv = document.createElement('canvas');
+        cv.width = size;
+        cv.height = size;
+        const c = cv.getContext('2d');
 
-      if (!currentProblem) return;
+        // 白底
+        c.fillStyle = '#f8fafc';
+        c.fillRect(0, 0, size, size);
 
-      const startX = valueToCanvasX(currentProblem.startValue, w);
-      const targetX = valueToCanvasX(currentProblem.targetValue, w);
+        // 黃色與藍色漩渦色塊 (Mikasa Style)
+        c.lineWidth = 14;
+        c.strokeStyle = '#1e293b';
 
-      // 4. 繪製出發點與落點標記
-      ctx.fillStyle = '#f97316';
-      ctx.beginPath();
-      ctx.arc(startX, groundY, 4, 0, Math.PI * 2);
-      ctx.fill();
+        // 藍色弧帶
+        c.fillStyle = '#0284c7';
+        c.beginPath();
+        c.arc(size / 2, size / 2, size * 0.46, 0, Math.PI * 0.7);
+        c.lineTo(size / 2, size / 2);
+        c.fill();
+        c.stroke();
 
-      // 5. 繪製排球拋物線軌跡
-      const currentX = startX + (targetX - startX) * progress;
-      const arcHeight = Math.min(50, Math.abs(targetX - startX) * 0.4);
-      const currentY = groundY - Math.sin(progress * Math.PI) * arcHeight - 8;
+        c.beginPath();
+        c.arc(size / 2, size / 2, size * 0.46, Math.PI, Math.PI * 1.7);
+        c.lineTo(size / 2, size / 2);
+        c.fill();
+        c.stroke();
 
-      ctx.beginPath();
-      ctx.strokeStyle = currentProblem.targetValue >= currentProblem.startValue ? 'rgba(74, 222, 128, 0.5)' : 'rgba(248, 113, 113, 0.5)';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 4]);
-      ctx.moveTo(startX, groundY);
-      const controlY = groundY - arcHeight * 1.5;
-      ctx.quadraticCurveTo((startX + targetX) / 2, controlY, targetX, groundY);
-      ctx.stroke();
-      ctx.setLineDash([]);
+        // 黃色弧帶
+        c.fillStyle = '#eab308';
+        c.beginPath();
+        c.arc(size / 2, size / 2, size * 0.46, Math.PI * 0.7, Math.PI);
+        c.lineTo(size / 2, size / 2);
+        c.fill();
+        c.stroke();
 
-      // 6. 繪製排球 (經典黃/藍/白皮革)
-      ctx.save();
-      ctx.translate(currentX, currentY);
-      ctx.rotate(progress * Math.PI * 4);
+        c.beginPath();
+        c.arc(size / 2, size / 2, size * 0.46, Math.PI * 1.7, Math.PI * 2);
+        c.lineTo(size / 2, size / 2);
+        c.fill();
+        c.stroke();
 
-      // 球體外圈
-      ctx.beginPath();
-      ctx.arc(0, 0, 9, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#1e293b';
-      ctx.stroke();
+        // 排球經典條紋接縫
+        c.strokeStyle = '#334155';
+        c.lineWidth = 6;
+        for (let i = 0; i < 6; i++) {
+          c.beginPath();
+          c.arc(size / 2, size / 2, (size / 6) * i, 0, Math.PI * 2);
+          c.stroke();
+        }
 
-      // 旋轉皮革條紋
-      ctx.fillStyle = '#f59e0b';
-      ctx.beginPath();
-      ctx.arc(0, 0, 9, 0, Math.PI * 0.6);
-      ctx.lineTo(0, 0);
-      ctx.fill();
+        const texture = new THREE.CanvasTexture(cv);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        return texture;
+      }
 
-      ctx.fillStyle = '#2563eb';
-      ctx.beginPath();
-      ctx.arc(0, 0, 9, Math.PI, Math.PI * 1.6);
-      ctx.lineTo(0, 0);
-      ctx.fill();
-      ctx.restore();
+      // 生成木質地板條紋紋理
+      createWoodFloorTexture() {
+        const size = 512;
+        const cv = document.createElement('canvas');
+        cv.width = size;
+        cv.height = size;
+        const c = cv.getContext('2d');
 
-      // 數值指示浮標
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 10px Bungee';
-      ctx.fillText(formatDirected(progress > 0.8 ? currentProblem.targetValue : currentProblem.startValue, false), currentX, currentY - 13);
-    }
+        // 暖木色底
+        c.fillStyle = '#c97d32';
+        c.fillRect(0, 0, size, size);
 
-    function animateSmash(onComplete) {
-      isAnimatingSmash = true;
-      smashProgress = 0;
-      const startTime = performance.now();
-      const duration = 600; // ms
+        // 木板條紋
+        c.fillStyle = '#bd7128';
+        const plankHeight = 32;
+        for (let y = 0; y < size; y += plankHeight) {
+          if ((y / plankHeight) % 2 === 0) {
+            c.fillRect(0, y, size, plankHeight);
+          }
+          // 木板橫縫
+          c.fillStyle = 'rgba(0,0,0,0.15)';
+          c.fillRect(0, y, size, 2);
+          c.fillStyle = '#bd7128';
+        }
 
-      function frame(now) {
-        const elapsed = now - startTime;
-        smashProgress = Math.min(1, elapsed / duration);
-        // easeOutQuad
-        const ease = 1 - (1 - smashProgress) * (1 - smashProgress);
-        drawCourt(gameState.currentProblem, ease);
+        const texture = new THREE.CanvasTexture(cv);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(4, 4);
+        return texture;
+      }
 
-        if (smashProgress < 1) {
-          requestAnimationFrame(frame);
-        } else {
-          isAnimatingSmash = false;
-          if (onComplete) onComplete();
+      init() {
+        const container = this.canvas.parentElement;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+
+        // 1. Scene
+        this.scene = new THREE.Scene();
+        this.scene.background = new THREE.Color(0x0c0d12);
+
+        // 2. Camera (俯瞰透視角度，方便看清 X=0 球網與兩側)
+        this.camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+        this.camera.position.set(0, 7.8, 12.5);
+        this.camera.lookAt(0, 1.2, 0);
+
+        // 3. Renderer
+        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: true });
+        this.renderer.setSize(width, height);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+        // 4. Lights
+        const ambient = new THREE.AmbientLight(0xffffff, 0.75);
+        this.scene.add(ambient);
+
+        const dirLight = new THREE.DirectionalLight(0xfff7ed, 1.2);
+        dirLight.position.set(5, 14, 8);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        this.scene.add(dirLight);
+
+        // 烏野橘色氛圍側燈
+        const orangePoint = new THREE.PointLight(0xff7700, 1.5, 20);
+        orangePoint.position.set(-6, 3, 2);
+        this.scene.add(orangePoint);
+
+        const cyanPoint = new THREE.PointLight(0x00d4ff, 1.0, 20);
+        cyanPoint.position.set(6, 3, 2);
+        this.scene.add(cyanPoint);
+
+        // 5. 建立排球場地面 (Court Ground)
+        const courtGeo = new THREE.PlaneGeometry(22, 10);
+        const courtMat = new THREE.MeshStandardMaterial({
+          map: this.createWoodFloorTexture(),
+          roughness: 0.35,
+          metalness: 0.1
+        });
+        const floor = new THREE.Mesh(courtGeo, courtMat);
+        floor.rotation.x = -Math.PI / 2;
+        floor.receiveShadow = true;
+        this.scene.add(floor);
+
+        // 球場白色界線
+        this.createCourtLines();
+
+        // 6. 建立 3D 排球球網 (Net at X = 0)
+        this.createVolleyballNet();
+
+        // 7. 建立 3D 排球 (Mikasa 旋轉排球)
+        const ballGeo = new THREE.SphereGeometry(0.42, 32, 32);
+        const ballMat = new THREE.MeshStandardMaterial({
+          map: this.createVolleyballTexture(),
+          roughness: 0.4,
+          metalness: 0.05
+        });
+        this.ball = new THREE.Mesh(ballGeo, ballMat);
+        this.ball.castShadow = true;
+        this.ball.position.set(0, 1.5, 0);
+        this.scene.add(this.ball);
+
+        // 8. 特效：扣殺地面衝擊光環 (Floor Ripple)
+        const ringGeo = new THREE.RingGeometry(0.1, 0.8, 32);
+        const ringMat = new THREE.MeshBasicMaterial({
+          color: 0xffaa00,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0
+        });
+        this.floorRipple = new THREE.Mesh(ringGeo, ringMat);
+        this.floorRipple.rotation.x = -Math.PI / 2;
+        this.floorRipple.position.y = 0.02;
+        this.scene.add(this.floorRipple);
+
+        // 9. 特效：動態運動軌跡拖尾 (Motion Trail Line)
+        const trailGeo = new THREE.BufferGeometry();
+        const trailMat = new THREE.LineBasicMaterial({ color: 0xffaa00, linewidth: 2 });
+        this.trailLine = new THREE.Line(trailGeo, trailMat);
+        this.scene.add(this.trailLine);
+
+        // 10. 事件監聽 (旋轉視角與響應大小)
+        this.setupInteractions();
+      }
+
+      createCourtLines() {
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 });
+        const points = [];
+
+        // 外框界線
+        points.push(new THREE.Vector3(-9, 0.01, -4.5));
+        points.push(new THREE.Vector3(9, 0.01, -4.5));
+        points.push(new THREE.Vector3(9, 0.01, 4.5));
+        points.push(new THREE.Vector3(-9, 0.01, 4.5));
+        points.push(new THREE.Vector3(-9, 0.01, -4.5));
+
+        const boxGeo = new THREE.BufferGeometry().setFromPoints(points);
+        const courtBox = new THREE.Line(boxGeo, lineMat);
+        this.scene.add(courtBox);
+
+        // 進攻線 (3米線) - 左右各一條
+        const createAttackLine = (x) => {
+          const p = [new THREE.Vector3(x, 0.01, -4.5), new THREE.Vector3(x, 0.01, 4.5)];
+          return new THREE.Line(new THREE.BufferGeometry().setFromPoints(p), lineMat);
+        };
+        this.scene.add(createAttackLine(-3));
+        this.scene.add(createAttackLine(3));
+
+        // 3D 數軸刻度標記 (每單位 1 個小光點標記)
+        for (let x = -8; x <= 8; x += 2) {
+          const markerGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.02, 16);
+          const markerMat = new THREE.MeshBasicMaterial({
+            color: x === 0 ? 0xff7700 : (x > 0 ? 0x22c55e : 0xef4444)
+          });
+          const marker = new THREE.Mesh(markerGeo, markerMat);
+          marker.position.set(x, 0.015, 0);
+          this.scene.add(marker);
         }
       }
-      requestAnimationFrame(frame);
+
+      createVolleyballNet() {
+        this.netMeshGroup = new THREE.Group();
+
+        // 網柱 (兩側立柱)
+        const poleMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.8, roughness: 0.2 });
+        const poleGeo = new THREE.CylinderGeometry(0.08, 0.08, 3.2, 16);
+
+        const pole1 = new THREE.Mesh(poleGeo, poleMat);
+        pole1.position.set(0, 1.6, -4.8);
+        pole1.castShadow = true;
+        this.netMeshGroup.add(pole1);
+
+        const pole2 = new THREE.Mesh(poleGeo, poleMat);
+        pole2.position.set(0, 1.6, 4.8);
+        pole2.castShadow = true;
+        this.netMeshGroup.add(pole2);
+
+        // 球網格狀平面 (Net Mesh)
+        const netGeo = new THREE.PlaneGeometry(9.6, 1.2, 24, 6);
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 64;
+        const ctx = canvas.getContext('2d');
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.lineWidth = 2;
+        for (let x = 0; x <= 128; x += 8) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 64); ctx.stroke();
+        }
+        for (let y = 0; y <= 64; y += 8) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(128, y); ctx.stroke();
+        }
+        // 頂部白邊帶
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, 128, 8);
+
+        const netTex = new THREE.CanvasTexture(canvas);
+        netTex.wrapS = THREE.RepeatWrapping;
+        netTex.wrapT = THREE.RepeatWrapping;
+
+        const netMat = new THREE.MeshBasicMaterial({
+          map: netTex,
+          transparent: true,
+          side: THREE.DoubleSide
+        });
+
+        const netMesh = new THREE.Mesh(netGeo, netMat);
+        netMesh.rotation.y = Math.PI / 2;
+        netMesh.position.set(0, 2.0, 0);
+        this.netMeshGroup.add(netMesh);
+
+        this.scene.add(this.netMeshGroup);
+      }
+
+      setupInteractions() {
+        const dom = this.canvas;
+        const onDown = (clientX) => {
+          this.isDragging = true;
+          this.prevMouseX = clientX;
+        };
+        const onMove = (clientX) => {
+          if (!this.isDragging) return;
+          const delta = clientX - this.prevMouseX;
+          this.prevMouseX = clientX;
+          this.courtRotY += delta * 0.006;
+          this.scene.rotation.y = this.courtRotY;
+        };
+        const onUp = () => {
+          this.isDragging = false;
+        };
+
+        dom.addEventListener('mousedown', (e) => onDown(e.clientX));
+        window.addEventListener('mousemove', (e) => onMove(e.clientX));
+        window.addEventListener('mouseup', onUp);
+
+        dom.addEventListener('touchstart', (e) => {
+          if (e.touches.length > 0) onDown(e.touches[0].clientX);
+        }, { passive: true });
+        window.addEventListener('touchmove', (e) => {
+          if (e.touches.length > 0) onMove(e.touches[0].clientX);
+        }, { passive: true });
+        window.addEventListener('touchend', onUp);
+
+        window.addEventListener('resize', () => {
+          const container = this.canvas.parentElement;
+          if (!container) return;
+          const w = container.clientWidth;
+          const h = container.clientHeight;
+          this.camera.aspect = w / h;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(w, h);
+        });
+      }
+
+      // 將數學數值轉為 3D 空間 X 座標 (以 0 為中線 Net)
+      valTo3DX(val) {
+        // 限制在 -8 到 +8 空間內
+        const scale = 0.52;
+        return Math.max(-8, Math.min(8, val * scale));
+      }
+
+      // 重置球體準備起跳位置
+      setupBallForProblem(startVal) {
+        const x = this.valTo3DX(startVal);
+        this.ball.position.set(x, 1.8, 0);
+        this.trailPoints = [this.ball.position.clone()];
+        this.updateTrail();
+        if (this.floorRipple) this.floorRipple.material.opacity = 0;
+      }
+
+      updateTrail() {
+        const positions = new Float32Array(this.trailPoints.length * 3);
+        this.trailPoints.forEach((pt, i) => {
+          positions[i * 3] = pt.x;
+          positions[i * 3 + 1] = pt.y;
+          positions[i * 3 + 2] = pt.z;
+        });
+        this.trailLine.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      }
+
+      // 扣殺得分動畫 (Super Spike Hit)
+      triggerSuperSpike(startVal, targetVal, onFinished) {
+        this.animating = true;
+        this.animStartTime = performance.now();
+        this.animDuration = 650;
+        this.isErrorAnimation = false;
+
+        const start3DX = this.valTo3DX(startVal);
+        const target3DX = this.valTo3DX(targetVal);
+
+        // 起點位置 (托球高點)
+        this.animStartPos.set(start3DX, 2.0, 0);
+        // 暴扣落點 (扣在對方場地或目標數值)
+        this.animEndPos.set(target3DX, 0.42, 0);
+
+        this.animArcHeight = Math.max(3.2, Math.abs(target3DX - start33DX = start3DX) * 0.5 + 2.5);
+        this.animCallback = onFinished;
+        this.trailPoints = [];
+      }
+
+      // 失誤動畫 (觸網或出界)
+      triggerErrorPlay(startVal, onFinished) {
+        this.animating = true;
+        this.animStartTime = performance.now();
+        this.animDuration = 700;
+        this.isErrorAnimation = true;
+
+        const start3DX = this.valTo3DX(startVal);
+        this.animStartPos.set(start3DX, 1.8, 0);
+        // 撞網 (X=0)
+        this.animEndPos.set(0, 1.5, 0.3);
+        this.animArcHeight = 2.2;
+        this.animCallback = onFinished;
+        this.trailPoints = [];
+      }
+
+      updateAnimation(now) {
+        if (!this.animating) {
+          // 閒置時排球輕微旋轉與懸浮呼吸感
+          if (this.ball) {
+            this.ball.rotation.y += 0.01;
+            this.ball.position.y += Math.sin(now * 0.003) * 0.002;
+          }
+          return;
+        }
+
+        const elapsed = now - this.animStartTime;
+        const progress = Math.min(1, elapsed / this.animDuration);
+
+        // easeInQuad 加速扣球感
+        const ease = this.isErrorAnimation ? progress : (progress * progress);
+
+        // 插值計算位置
+        const curX = THREE.MathUtils.lerp(this.animStartPos.x, this.animEndPos.x, ease);
+        const curZ = THREE.MathUtils.lerp(this.animStartPos.z, this.animEndPos.z, ease);
+        
+        // 拋物線高度
+        const arcY = Math.sin(progress * Math.PI) * this.animArcHeight;
+        const curY = THREE.MathUtils.lerp(this.animStartPos.y, this.animEndPos.y, ease) + (this.isErrorAnimation ? arcY * 0.5 : arcY);
+
+        this.ball.position.set(curX, curY, curZ);
+
+        // 扣殺高速自轉
+        this.ball.rotation.x += 0.35;
+        this.ball.rotation.z += 0.25;
+
+        // 收集軌跡點
+        this.trailPoints.push(this.ball.position.clone());
+        if (this.trailPoints.length > 25) this.trailPoints.shift();
+        this.updateTrail();
+
+        // 落地瞬間特效
+        if (progress >= 1) {
+          this.animating = false;
+
+          if (!this.isErrorAnimation) {
+            // 扣球衝擊光環展開
+            this.floorRipple.position.set(this.animEndPos.x, 0.02, this.animEndPos.z);
+            this.floorRipple.scale.set(1, 1, 1);
+            this.floorRipple.material.opacity = 0.9;
+          } else {
+            // 觸網晃動效果
+            if (this.netMeshGroup) {
+              this.netMeshGroup.rotation.z = 0.08;
+              setTimeout(() => { this.netMeshGroup.rotation.z = -0.05; }, 100);
+              setTimeout(() => { this.netMeshGroup.rotation.z = 0; }, 250);
+            }
+          }
+
+          if (this.animCallback) this.animCallback();
+        }
+      }
+
+      render(now) {
+        this.updateAnimation(now);
+
+        // 衰減地板衝擊光環
+        if (this.floorRipple && this.floorRipple.material.opacity > 0) {
+          this.floorRipple.material.opacity -= 0.035;
+          this.floorRipple.scale.x += 0.06;
+          this.floorRipple.scale.y += 0.06;
+        }
+
+        this.renderer.render(this.scene, this.camera);
+      }
     }
 
-    const mathEquationEl = document.getElementById('mathEquation');
-    const guidanceTextEl = document.getElementById('guidanceText');
-    const equationRuleTipEl = document.getElementById('equationRuleTip');
-    const courtStatusTextEl = document.getElementById('courtStatusText');
-    const optionsContainer = document.getElementById('optionsContainer');
+    let court3D = null;
+
     const scoreTextEl = document.getElementById('scoreText');
     const comboTextEl = document.getElementById('comboText');
     const timerTextEl = document.getElementById('timerText');
     const timerTitleEl = document.getElementById('timerTitle');
     const staminaBarEl = document.getElementById('staminaBar');
-    const mangaEffectLayer = document.getElementById('mangaEffectLayer');
+    const equationDisplayEl = document.getElementById('equationDisplay');
+    const questionCategoryEl = document.getElementById('questionCategory');
+    const ruleTipTagEl = document.getElementById('ruleTipTag');
+    const stepGuidanceTextEl = document.getElementById('stepGuidanceText');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const mangaOverlay = document.getElementById('mangaOverlay');
     const mangaText = document.getElementById('mangaText');
-    const answerFeedbackModal = document.getElementById('answerFeedbackModal');
-    const feedbackMainTitle = document.getElementById('feedbackMainTitle');
-    const feedbackDetailText = document.getElementById('feedbackDetailText');
+    const feedbackLayer = document.getElementById('feedbackLayer');
+    const feedbackTitle = document.getElementById('feedbackTitle');
+    const feedbackExplanation = document.getElementById('feedbackExplanation');
+    const modeTagEl = document.getElementById('modeTag');
 
-    function displayNewQuestion() {
-      gameState.currentProblem = generateMathProblem();
+    function renderQuestion() {
+      gameState.currentProblem = generateProblem();
       gameState.isInputLocked = false;
-      answerFeedbackModal.classList.add('hidden');
-      mangaEffectLayer.classList.add('hidden');
+      feedbackLayer.classList.add('hidden');
+      mangaOverlay.classList.add('hidden');
 
       const q = gameState.currentProblem;
-      mathEquationEl.textContent = `${q.formulaText} = ?`;
-      guidanceTextEl.textContent = q.guidanceNote;
-      equationRuleTipEl.textContent = q.ruleTip;
-      courtStatusTextEl.textContent = `起點: ${formatDirected(q.startValue)} ｜ 判斷方向扣殺`;
+      equationDisplayEl.textContent = `${q.formulaText} = ?`;
+      ruleTipTagEl.textContent = q.ruleTip;
+      stepGuidanceTextEl.textContent = q.guidance;
 
-      // 渲染選項按鈕
-      const buttons = optionsContainer.querySelectorAll('.choice-btn');
+      const opNames = {
+        '+': '加法突破',
+        '-': '減法位移',
+        '×': '乘法擴張',
+        '÷': '除法分配'
+      };
+      questionCategoryEl.textContent = `烏野進攻 · ${opNames[q.op] || '戰術運算'}`;
+
+      // 選項按鈕
+      const btns = optionsContainer.querySelectorAll('.choice-btn');
       q.options.forEach((optVal, idx) => {
-        const btn = buttons[idx];
-        const valSpan = btn.querySelector('.choice-val');
-        valSpan.textContent = formatDirected(optVal, false);
+        const btn = btns[idx];
+        const span = btn.querySelector('.choice-text');
+        span.textContent = formatNum(optVal, false);
         btn.dataset.val = optVal;
 
-        // 還原按鈕預設樣式
-        btn.className = 'choice-btn h-14 bg-neutral-900 border-2 border-neutral-700/90 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all';
+        btn.className = 'choice-btn h-13 py-3 bg-neutral-900 border-2 border-neutral-700 active:border-orange-400 rounded-xl flex items-center justify-center gap-2 text-xl font-sport font-black text-white shadow-lg active:scale-95 transition-all';
       });
 
-      // 重繪球場與數軸 (靜止在起跳點)
-      drawCourt(q, 0);
+      // 3D 排球就位
+      if (court3D) {
+        court3D.setupBallForProblem(q.startX);
+      }
     }
 
     function updateScoreboard() {
       scoreTextEl.textContent = gameState.score;
       comboTextEl.textContent = gameState.combo;
-      staminaBarEl.style.width = `${Math.max(5, gameState.stamina)}%`;
+      staminaBarEl.style.width = `${Math.max(6, gameState.stamina)}%`;
 
       if (gameState.mode === 'tournament') {
         timerTitleEl.textContent = 'TIME';
@@ -843,37 +1184,37 @@
       }
     }
 
-    function showMangaImpact(isCorrect) {
-      mangaEffectLayer.classList.remove('hidden');
-      if (isCorrect) {
-        const soundWords = ['ドン!!', 'ドゴォォォン!!', 'バァァン!!', 'スパイク!!'];
-        mangaText.textContent = soundWords[Math.floor(Math.random() * soundWords.length)];
-        mangaText.className = 'font-manga text-5xl font-black text-orange-500 tracking-tighter drop-shadow-[0_4px_16px_rgba(255,119,0,0.95)] manga-pop';
+    function showMangaBadge(isSuccess) {
+      mangaOverlay.classList.remove('hidden');
+      if (isSuccess) {
+        const shouts = ['ドン!!', 'ドゴォォォン!!', 'バァァン!!', 'ナイスキー!!', 'シャァァ!!'];
+        mangaText.textContent = shouts[Math.floor(Math.random() * shouts.length)];
+        mangaText.className = 'font-manga text-5xl font-black text-orange-500 tracking-tighter drop-shadow-[0_4px_16px_rgba(255,117,0,0.95)] manga-pop';
       } else {
-        mangaText.textContent = 'シャッ!! 攔截!';
-        mangaText.className = 'font-manga text-4xl font-black text-red-500 tracking-tighter drop-shadow-[0_4px_16px_rgba(239,68,68,0.95)] manga-pop';
+        mangaText.textContent = 'シャッ!! 封阻!!';
+        mangaText.className = 'font-manga text-4xl font-black text-rose-500 tracking-tighter drop-shadow-[0_4px_16px_rgba(244,63,94,0.95)] manga-pop';
       }
       setTimeout(() => {
-        mangaEffectLayer.classList.add('hidden');
-      }, 550);
+        mangaOverlay.classList.add('hidden');
+      }, 500);
     }
 
     function triggerScreenShake() {
       document.body.classList.add('shake-active');
       setTimeout(() => {
         document.body.classList.remove('shake-active');
-      }, 400);
+      }, 420);
     }
 
-    function onAnswerSelected(selectedVal, clickedBtn) {
+    function handleChoiceClick(chosenVal, clickedBtn) {
       if (gameState.isInputLocked) return;
       gameState.isInputLocked = true;
 
       const q = gameState.currentProblem;
-      const isCorrect = (selectedVal === q.ans);
+      const isCorrect = (chosenVal === q.ans);
       gameState.totalAnswered++;
 
-      // 觸發震動
+      // 震動反饋
       if (navigator.vibrate) {
         navigator.vibrate(isCorrect ? 35 : [50, 40, 50]);
       }
@@ -885,70 +1226,69 @@
           gameState.maxCombo = gameState.combo;
         }
 
-        // 計分：基本 100 分 + Combo 加乘 + 難度加成
-        const comboBonus = (gameState.combo - 1) * 25;
-        const diffBonus = gameState.difficulty * 20;
+        // 計分：基本分 + 連扣加成 + 難度加成
+        const comboBonus = (gameState.combo - 1) * 20;
+        const diffBonus = gameState.difficulty * 25;
         gameState.score += (100 + comboBonus + diffBonus);
         gameState.stamina = Math.min(100, gameState.stamina + 8);
 
-        // 音效與動畫特效
-        sound.playSpikeSmash();
-        setTimeout(() => sound.playScoreSuccess(), 100);
-        showMangaImpact(true);
+        // 音效與動畫
+        sound.playSpike();
+        setTimeout(() => sound.playScore(), 120);
+        showMangaBadge(true);
         triggerScreenShake();
 
         clickedBtn.classList.remove('bg-neutral-900');
         clickedBtn.classList.add('bg-orange-600', 'border-orange-400', 'text-white');
 
-        // 啟動排球飛躍至目標數值的動畫
-        animateSmash(() => {
-          feedbackMainTitle.textContent = gameState.combo > 2 ? `🔥 ${gameState.combo} 連續扣殺得分!!` : 'DON!! 完美暴扣！';
-          feedbackMainTitle.className = 'text-2xl font-black font-manga text-orange-400 mb-1';
-          feedbackDetailText.innerHTML = `
-            落點：<span class="text-green-400 font-bold font-sport">${formatDirected(q.ans, false)}</span> 正確！<br>
-            <span class="text-[11px] text-gray-300">${q.stepDetail}</span>
+        // 3D 暴扣躍遷動畫
+        court3D.triggerSuperSpike(q.startX, q.targetX, () => {
+          feedbackTitle.textContent = gameState.combo > 2 ? `🔥 ${gameState.combo} 連續超級暴扣！` : 'DON!! 完美扣殺得分！';
+          feedbackTitle.className = 'text-2xl font-black font-manga text-orange-400 mb-0.5';
+          feedbackExplanation.innerHTML = `
+            落點：<span class="text-emerald-400 font-bold font-sport">${formatNum(q.ans, false)}</span> 正確！<br>
+            <span class="text-[11px] text-gray-300">${q.explanation}</span>
           `;
-          answerFeedbackModal.classList.remove('hidden');
+          feedbackLayer.classList.remove('hidden');
 
           updateScoreboard();
-          setTimeout(displayNewQuestion, 950);
+          setTimeout(renderQuestion, 950);
         });
 
       } else {
-        // 答錯邏輯
+        // 答錯
         gameState.combo = 0;
         gameState.stamina = Math.max(10, gameState.stamina - 20);
-        sound.playBlockedBuzz();
-        showMangaImpact(false);
+        sound.playNetHit();
+        showMangaBadge(false);
 
         clickedBtn.classList.remove('bg-neutral-900');
-        clickedBtn.classList.add('bg-red-900/90', 'border-red-500', 'text-red-200');
+        clickedBtn.classList.add('bg-rose-950/80', 'border-rose-500', 'text-rose-200');
 
-        // 標記正解按鈕
+        // 標記正確答案按鈕
         optionsContainer.querySelectorAll('.choice-btn').forEach(b => {
           if (parseInt(b.dataset.val, 10) === q.ans) {
-            b.classList.add('bg-emerald-950', 'border-emerald-500', 'text-emerald-300');
+            b.classList.add('bg-emerald-950/80', 'border-emerald-500', 'text-emerald-300');
           }
         });
 
-        // 數軸依舊展示正確軌跡以供複習
-        animateSmash(() => {
-          feedbackMainTitle.textContent = 'BLOCKED! 觸網出界！';
-          feedbackMainTitle.className = 'text-2xl font-black font-manga text-red-500 mb-1';
-          feedbackDetailText.innerHTML = `
-            正解應為：<span class="text-yellow-400 font-bold font-sport">${formatDirected(q.ans, false)}</span><br>
-            <span class="text-[11px] text-gray-300">${q.stepDetail}</span>
+        // 3D 觸網動畫
+        court3D.triggerErrorPlay(q.startX, () => {
+          feedbackTitle.textContent = 'BLOCKED! 觸網攔截！';
+          feedbackTitle.className = 'text-2xl font-black font-manga text-rose-500 mb-0.5';
+          feedbackExplanation.innerHTML = `
+            正解為：<span class="text-amber-400 font-bold font-sport">${formatNum(q.ans, false)}</span><br>
+            <span class="text-[11px] text-gray-300">${q.explanation}</span>
           `;
-          answerFeedbackModal.classList.remove('hidden');
+          feedbackLayer.classList.remove('hidden');
 
           updateScoreboard();
-          // 給予稍長時間閱讀解法
-          setTimeout(displayNewQuestion, 1800);
+          setTimeout(renderQuestion, 1700);
         });
       }
     }
 
-    function startTournamentCountdown() {
+    function startTournamentTimer() {
       clearInterval(gameState.timerInterval);
       gameState.timeLeft = 60;
       updateScoreboard();
@@ -957,56 +1297,53 @@
         gameState.timeLeft--;
         if (gameState.timeLeft <= 0) {
           clearInterval(gameState.timerInterval);
-          finishTournament();
+          finishTournamentMatch();
         } else {
           timerTextEl.textContent = `${gameState.timeLeft}s`;
           if (gameState.timeLeft <= 5) {
-            timerTextEl.classList.add('text-red-500');
+            timerTextEl.classList.add('text-rose-500');
           }
         }
       }, 1000);
     }
 
-    function finishTournament() {
+    function finishTournamentMatch() {
       gameState.isInputLocked = true;
       sound.playWhistle();
 
-      const resultModal = document.getElementById('resultModal');
-      const finalRankTitle = document.getElementById('finalRankTitle');
-      const finalScoreVal = document.getElementById('finalScoreVal');
-      const finalComboVal = document.getElementById('finalComboVal');
+      const modal = document.getElementById('resultModal');
+      const finalTitle = document.getElementById('finalTitle');
+      const finalScore = document.getElementById('finalScore');
+      const finalCombo = document.getElementById('finalCombo');
       const finalTotalAnswered = document.getElementById('finalTotalAnswered');
-      const finalAccuracyVal = document.getElementById('finalAccuracyVal');
-      const coachSummaryQuote = document.getElementById('coachSummaryQuote');
+      const finalAccuracy = document.getElementById('finalAccuracy');
+      const coachComment = document.getElementById('coachComment');
 
-      finalScoreVal.textContent = gameState.score;
-      finalComboVal.textContent = gameState.maxCombo;
+      finalScore.textContent = gameState.score;
+      finalCombo.textContent = gameState.maxCombo;
       finalTotalAnswered.textContent = gameState.totalAnswered;
 
-      const accuracy = gameState.totalAnswered > 0 
-        ? Math.round((gameState.totalCorrect / gameState.totalAnswered) * 100) 
-        : 0;
-      finalAccuracyVal.textContent = `${accuracy}%`;
+      const acc = gameState.totalAnswered > 0 ? Math.round((gameState.totalCorrect / gameState.totalAnswered) * 100) : 0;
+      finalAccuracy.textContent = `${acc}%`;
 
-      // 烏野榮譽稱號評級
-      if (gameState.score >= 1800 && accuracy >= 85) {
-        finalRankTitle.textContent = '👑 球場上的大王者 (S級)';
-        coachSummaryQuote.textContent = '「神乎其技的速攻！有向數已經與你的直覺融為一體！」';
+      if (gameState.score >= 1800 && acc >= 80) {
+        finalTitle.textContent = '👑 全國級大王牌攻手！';
+        coachComment.textContent = '「神級怪人速攻！有向數四則運算已經完全刻在你的球感之中！」';
       } else if (gameState.score >= 1100) {
-        finalRankTitle.textContent = '🏐 烏野守護神 · 西谷級接球 (A級)';
-        coachSummaryQuote.textContent = '「穩健的一傳！無論正負數如何跳躍都能穩穩接住！」';
+        finalTitle.textContent = '🏐 烏野守護神 · 頂級一傳！';
+        coachComment.textContent = '「好球！無論正負數如何倒退跳躍，都能穩穩接起並精確暴扣！」';
       } else if (gameState.score >= 600) {
-        finalRankTitle.textContent = '⚡ 先發熱血攻手 (B級)';
-        coachSummaryQuote.textContent = '「抓住了乘除同號得正的節奏！繼續保持攻擊火器！」';
+        finalTitle.textContent = '⚡ 先發主力攻手！';
+        coachComment.textContent = '「抓住負負得正與同號得正的節奏！你的發球與心算會更具破壞力！」';
       } else {
-        finalRankTitle.textContent = '🌱 球僮修行中 (C級)';
-        coachSummaryQuote.textContent = '「敗北是弱小的證明，還是考驗？打開秘笈重整旗鼓，再次起跳吧！」';
+        finalTitle.textContent = '🌱 熱血特訓見習生！';
+        coachComment.textContent = '「敗北是弱小的證明，還是考驗？打開戰術秘笈複習，下一球一定會飛得更高！」';
       }
 
-      resultModal.classList.remove('hidden');
+      modal.classList.remove('hidden');
     }
 
-    function restartGame(mode = gameState.mode) {
+    function resetGame(mode = gameState.mode) {
       gameState.mode = mode;
       gameState.score = 0;
       gameState.combo = 0;
@@ -1014,35 +1351,34 @@
       gameState.totalAnswered = 0;
       gameState.totalCorrect = 0;
       gameState.stamina = 100;
-      timerTextEl.classList.remove('text-red-500');
       clearInterval(gameState.timerInterval);
+      timerTextEl.classList.remove('text-rose-500');
 
-      const modeTag = document.getElementById('modeTag');
       if (gameState.mode === 'tournament') {
-        modeTag.textContent = '60s 全國大賽';
-        modeTag.className = 'text-[9px] bg-red-950 text-red-300 px-1.5 py-0.2 rounded border border-red-700 font-bold';
-        startTournamentCountdown();
+        modeTagEl.textContent = '60s 全國大賽';
+        modeTagEl.className = 'text-[9px] bg-rose-950 text-rose-300 px-1.5 py-0.5 rounded border border-rose-700 font-bold';
+        startTournamentTimer();
       } else {
-        modeTag.textContent = '特訓練習模式';
-        modeTag.className = 'text-[9px] bg-neutral-800 text-orange-300 px-1.5 py-0.2 rounded border border-neutral-700 font-bold';
+        modeTagEl.textContent = '自主特訓';
+        modeTagEl.className = 'text-[9px] bg-neutral-800 text-orange-300 px-1.5 py-0.5 rounded border border-neutral-700 font-bold';
       }
 
       updateScoreboard();
-      displayNewQuestion();
+      renderQuestion();
     }
 
     optionsContainer.addEventListener('click', (e) => {
       const btn = e.target.closest('.choice-btn');
       if (!btn) return;
       const val = parseInt(btn.dataset.val, 10);
-      onAnswerSelected(val, btn);
+      handleChoiceClick(val, btn);
     });
 
-    // 靜音切換
-    const soundToggleBtn = document.getElementById('soundToggleBtn');
-    soundToggleBtn.addEventListener('click', () => {
-      sound.isMuted = !sound.isMuted;
-      soundToggleBtn.textContent = sound.isMuted ? '🔇' : '🔊';
+    // 靜音開關
+    const soundBtn = document.getElementById('soundBtn');
+    soundBtn.addEventListener('click', () => {
+      sound.muted = !sound.muted;
+      soundBtn.textContent = sound.muted ? '🔇' : '🔊';
     });
 
     // 秘笈彈窗
@@ -1056,89 +1392,97 @@
     document.getElementById('configModalBtn').addEventListener('click', () => settingsModal.classList.remove('hidden'));
     document.getElementById('closeSettingsModalBtn').addEventListener('click', () => settingsModal.classList.add('hidden'));
 
-    // 模式切換按鈕
-    const btnSetPractice = document.getElementById('btnSetPractice');
-    const btnSetTournament = document.getElementById('btnSetTournament');
-    btnSetPractice.addEventListener('click', () => {
+    // 模式按鈕
+    const btnModePractice = document.getElementById('btnModePractice');
+    const btnModeTournament = document.getElementById('btnModeTournament');
+    btnModePractice.addEventListener('click', () => {
       gameState.mode = 'practice';
-      btnSetPractice.className = 'mode-opt py-2 px-2 rounded-xl border text-xs font-black transition-all bg-orange-600 text-white border-orange-400';
-      btnSetTournament.className = 'mode-opt py-2 px-2 rounded-xl border text-xs font-black transition-all bg-neutral-800 text-gray-400 border-neutral-700';
+      btnModePractice.className = 'mode-btn py-2 px-2 rounded-xl border text-xs font-black transition-all bg-orange-600 text-white border-orange-400';
+      btnModeTournament.className = 'mode-btn py-2 px-2 rounded-xl border text-xs font-black transition-all bg-neutral-800 text-gray-400 border-neutral-700';
     });
-    btnSetTournament.addEventListener('click', () => {
+    btnModeTournament.addEventListener('click', () => {
       gameState.mode = 'tournament';
-      btnSetTournament.className = 'mode-opt py-2 px-2 rounded-xl border text-xs font-black transition-all bg-orange-600 text-white border-orange-400';
-      btnSetPractice.className = 'mode-opt py-2 px-2 rounded-xl border text-xs font-black transition-all bg-neutral-800 text-gray-400 border-neutral-700';
+      btnModeTournament.className = 'mode-btn py-2 px-2 rounded-xl border text-xs font-black transition-all bg-orange-600 text-white border-orange-400';
+      btnModePractice.className = 'mode-btn py-2 px-2 rounded-xl border text-xs font-black transition-all bg-neutral-800 text-gray-400 border-neutral-700';
     });
 
-    // 運算按鈕群
-    document.getElementById('opButtonGroup').addEventListener('click', (e) => {
-      const btn = e.target.closest('.set-op-btn');
-      if (!btn) return;
-      gameState.operation = btn.dataset.op;
-      document.querySelectorAll('.set-op-btn').forEach(b => {
-        b.className = 'set-op-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700';
+    // 運算選擇
+    document.getElementById('opSelectGroup').addEventListener('click', (e) => {
+      const b = e.target.closest('.op-choice-btn');
+      if (!b) return;
+      gameState.operation = b.dataset.op;
+      document.querySelectorAll('.op-choice-btn').forEach(btn => {
+        btn.className = 'op-choice-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700';
       });
-      btn.className = 'set-op-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400';
+      b.className = 'op-choice-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400';
     });
 
-    // 難度按鈕群
-    document.getElementById('diffButtonGroup').addEventListener('click', (e) => {
-      const btn = e.target.closest('.set-diff-btn');
-      if (!btn) return;
-      gameState.difficulty = parseInt(btn.dataset.diff, 10);
-      document.querySelectorAll('.set-diff-btn').forEach(b => {
-        b.className = 'set-diff-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700';
+    // 難度選擇
+    document.getElementById('diffSelectGroup').addEventListener('click', (e) => {
+      const b = e.target.closest('.diff-choice-btn');
+      if (!b) return;
+      gameState.difficulty = parseInt(b.dataset.diff, 10);
+      document.querySelectorAll('.diff-choice-btn').forEach(btn => {
+        btn.className = 'diff-choice-btn py-2 rounded-lg bg-neutral-800 text-gray-400 border border-neutral-700';
       });
-      btn.className = 'set-diff-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400';
+      b.className = 'diff-choice-btn py-2 rounded-lg bg-orange-600 text-white border border-orange-400';
     });
 
-    // 套用設定並開球
-    document.getElementById('applyAndStartBtn').addEventListener('click', () => {
+    // 套用設定
+    document.getElementById('applySettingsBtn').addEventListener('click', () => {
       settingsModal.classList.add('hidden');
       sound.playWhistle();
-      restartGame();
+      resetGame();
     });
 
-    // 底部快速運算類型切換
-    function updateQuickButtons(activeType) {
-      gameState.operation = activeType;
+    // 底部快捷鍵
+    function setQuickOp(opType) {
+      gameState.operation = opType;
       const bAddSub = document.getElementById('quickOpAddSub');
       const bMulDiv = document.getElementById('quickOpMulDiv');
       const bAll = document.getElementById('quickOpAll');
-
       [bAddSub, bMulDiv, bAll].forEach(b => {
         b.className = 'px-2 py-0.5 bg-neutral-800 rounded text-gray-300 border border-neutral-700 font-bold';
       });
-
-      if (activeType === 'addsub') bAddSub.className = 'px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black';
-      if (activeType === 'muldiv') bMulDiv.className = 'px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black';
-      if (activeType === 'all') bAll.className = 'px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black';
-      
-      displayNewQuestion();
+      if (opType === 'addsub') bAddSub.className = 'px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black';
+      if (opType === 'muldiv') bMulDiv.className = 'px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black';
+      if (opType === 'all') bAll.className = 'px-2 py-0.5 bg-orange-600 text-white rounded border border-orange-400 font-black';
+      renderQuestion();
     }
-
-    document.getElementById('quickOpAddSub').addEventListener('click', () => updateQuickButtons('addsub'));
-    document.getElementById('quickOpMulDiv').addEventListener('click', () => updateQuickButtons('muldiv'));
-    document.getElementById('quickOpAll').addEventListener('click', () => updateQuickButtons('all'));
+    document.getElementById('quickOpAddSub').addEventListener('click', () => setQuickOp('addsub'));
+    document.getElementById('quickOpMulDiv').addEventListener('click', () => setQuickOp('muldiv'));
+    document.getElementById('quickOpAll').addEventListener('click', () => setQuickOp('all'));
 
     // 結算彈窗按鈕
     const resultModal = document.getElementById('resultModal');
-    document.getElementById('resultRestartBtn').addEventListener('click', () => {
+    document.getElementById('resultRetryBtn').addEventListener('click', () => {
       resultModal.classList.add('hidden');
       sound.playWhistle();
-      restartGame('tournament');
+      resetGame('tournament');
     });
-    document.getElementById('resultToPracticeBtn').addEventListener('click', () => {
+    document.getElementById('resultPracticeBtn').addEventListener('click', () => {
       resultModal.classList.add('hidden');
-      btnSetPractice.click();
-      restartGame('practice');
+      btnModePractice.click();
+      resetGame('practice');
     });
 
-    // 初始化啟動
-    window.addEventListener('load', () => {
-      resizeCanvas();
-      restartGame('practice');
-    });
+    function animateLoop(now) {
+      requestAnimationFrame(animateLoop);
+      if (court3D) {
+        court3D.render(now);
+      }
+    }
+
+    window.onload = function() {
+      // 1. 初始化 Three.js 球場
+      court3D = new Haikyuu3DCourt('threeCanvas');
+
+      // 2. 啟動動畫渲染迴圈
+      animateLoop(performance.now());
+
+      // 3. 初始開始遊戲
+      resetGame('practice');
+    };
   </script>
 </body>
 </html>
